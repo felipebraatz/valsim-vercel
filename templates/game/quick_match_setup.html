@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center bg-[#1a1a2e] text-white p-4 font-sans">
+
+    <div class="w-full max-w-7xl">
+        <div class="flex items-center mb-8">
+            <a href="{% url 'home' %}" class="text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+                Back to Main Menu
+            </a>
+        </div>
+
+        <h1 class="text-4xl font-bold text-center mb-8">Quick Match Setup</h1>
+
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <div class="space-y-4">
+                    <label class="block text-gray-400 text-sm font-bold mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Team A
+                    </label>
+                    <div class="relative custom-select">
+                        <input type="hidden" name="team_a" id="team_a_input">
+                        <button type="button" onclick="toggleDropdown('A')"
+                            class="custom-select-button w-full bg-[#16213e] text-white border border-gray-700 rounded-lg py-3 px-4 flex items-center justify-between focus:outline-none focus:border-[#ff4655]">
+                            <div id="team-a-selected-content" class="flex items-center gap-2">
+                                <span class="text-gray-400">Select Team A</span>
+                            </div>
+                            <svg id="team-a-arrow" class="h-5 w-5 transition-transform duration-200"
+                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="team-a-options"
+                            class="custom-select-options absolute z-20 w-full mt-1 bg-[#16213e] border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                            {% for region, region_teams in teams_by_region.items %}
+                            <div
+                                class="px-4 py-2 bg-[#0f172a] text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-700">
+                                {{ region }}
+                            </div>
+                            {% for team in region_teams %}
+                            <div class="team-option px-4 py-3 hover:bg-[#ff4655] cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-700 last:border-0"
+                                onclick="selectTeam('A', '{{ team.id }}')">
+                                {% if team.logo %}
+                                <img src="{{ team.logo.url }}" alt="{{ team.name }}"
+                                    class="w-[20px] h-[20px] object-contain">
+                                {% endif %}
+                                <span class="font-medium text-[16px]">{{ team.name }}</span>
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div id="team-a-preview"
+                        class="mt-4 bg-[#16213e] rounded-xl p-6 border border-gray-700 shadow-lg transition-all duration-500 opacity-0 transform translate-y-4">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-400 text-sm font-bold mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            Format
+                        </label>
+                        <select name="format"
+                            class="w-full bg-[#16213e] text-white border border-gray-700 rounded-lg py-3 px-4 focus:outline-none focus:border-[#ff4655] appearance-none">
+                            <option value="BO1">Best of 1</option>
+                            <option value="BO3">Best of 3</option>
+                            <option value="BO5">Best of 5</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 text-sm font-bold mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            Maps <span id="map-count-indicator" class="text-xs text-[#ff4655] ml-2 font-normal">(Select
+                                1)</span>
+                        </label>
+
+                        <div class="relative">
+                            <input type="hidden" name="maps" id="selected_maps_input" required>
+
+                            <button type="button" onclick="toggleMapDropdown()"
+                                class="w-full bg-[#16213e] text-white border border-gray-700 rounded-lg py-3 px-4 flex items-center justify-between focus:outline-none focus:border-[#ff4655] min-h-[50px]">
+                                <span id="map-selection-text" class="text-gray-400 truncate pr-4">Select Map...</span>
+                                <svg id="map-arrow" class="h-5 w-5 flex-shrink-0 transition-transform duration-200"
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div id="map-dropdown"
+                                class="absolute z-30 w-full mt-1 bg-[#16213e] border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto hidden custom-scrollbar">
+                                {% for map in maps %}
+                                <div onclick="toggleMapSelection('{{ map.id }}', '{{ map.name }}')"
+                                    id="map-option-{{ map.id }}"
+                                    class="map-option px-4 py-3 hover:bg-[#0f172a] cursor-pointer flex items-center justify-between border-b border-gray-700/50 last:border-0 transition-colors group">
+                                    <span class="font-medium text-gray-300 group-hover:text-white">{{ map.name }}</span>
+                                    <svg class="w-5 h-5 text-[#ff4655] opacity-0 transition-opacity"
+                                        id="check-{{ map.id }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Simulation Type Input -->
+                    <input type="hidden" name="simulation_type" value="quick">
+
+                    <button type="button" onclick="randomizeSetup()"
+                        class="w-full bg-[#16213e] hover:bg-[#1f2b4d] text-gray-300 hover:text-white font-bold py-3 px-4 rounded-lg transition-all border border-gray-700 mb-4 flex items-center justify-center gap-2 group">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Randomize Setup
+                    </button>
+
+                    <button type="submit"
+                        class="w-full bg-[#ff4655] hover:bg-[#ff5864] text-white font-bold py-4 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3 text-lg">
+                        Start Match
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="block text-gray-400 text-sm font-bold mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Team B
+                    </label>
+                    <div class="relative custom-select">
+                        <input type="hidden" name="team_b" id="team_b_input">
+                        <button type="button" onclick="toggleDropdown('B')"
+                            class="custom-select-button w-full bg-[#16213e] text-white border border-gray-700 rounded-lg py-3 px-4 flex items-center justify-between focus:outline-none focus:border-[#ff4655]">
+                            <div id="team-b-selected-content" class="flex items-center gap-2">
+                                <span class="text-gray-400">Select Team B</span>
+                            </div>
+                            <svg id="team-b-arrow" class="h-5 w-5 transition-transform duration-200"
+                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="team-b-options"
+                            class="custom-select-options absolute z-20 w-full mt-1 bg-[#16213e] border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                            {% for region, region_teams in teams_by_region.items %}
+                            <div
+                                class="px-4 py-2 bg-[#0f172a] text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-700">
+                                {{ region }}
+                            </div>
+                            {% for team in region_teams %}
+                            <div class="team-option px-4 py-3 hover:bg-[#ff4655] cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-700 last:border-0"
+                                onclick="selectTeam('B', '{{ team.id }}')">
+                                {% if team.logo %}
+                                <img src="{{ team.logo.url }}" alt="{{ team.name }}"
+                                    class="w-[20px] h-[20px] object-contain">
+                                {% endif %}
+                                <span class="font-medium text-[16px]">{{ team.name }}</span>
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div id="team-b-preview"
+                        class="mt-4 bg-[#16213e] rounded-xl p-6 border border-gray-700 shadow-lg transition-all duration-500 opacity-0 transform translate-y-4">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const teamsData = JSON.parse('{{ teams_data_json|escapejs }}');
+
+    function toggleDropdown(side) {
+        const options = document.getElementById(`team-${side.toLowerCase()}-options`);
+        const arrow = document.getElementById(`team-${side.toLowerCase()}-arrow`);
+        const isHidden = options.classList.contains('hidden');
+
+        // Close all other dropdowns
+        document.querySelectorAll('[id$="-options"]').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('[id$="-arrow"]').forEach(el => el.style.transform = 'rotate(0deg)');
+
+        if (isHidden) {
+            options.classList.remove('hidden');
+            arrow.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    function selectTeam(side, teamId) {
+        const lowerSide = side.toLowerCase();
+        const team = teamsData.find(t => t.id == teamId);
+
+        if (!team) return;
+
+        // Update hidden input
+        document.getElementById(`team_${lowerSide}_input`).value = teamId;
+
+        // Update dropdown display
+        const contentDiv = document.getElementById(`team-${lowerSide}-selected-content`);
+        contentDiv.innerHTML = `
+            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" class="w-[20px] h-[20px] object-contain">` : ''}
+            <span class="font-bold text-[16px]">${team.name}</span>
+        `;
+
+        // Hide dropdown
+        document.getElementById(`team-${lowerSide}-options`).classList.add('hidden');
+        document.getElementById(`team-${lowerSide}-arrow`).style.transform = 'rotate(0deg)';
+
+        // Update Preview
+        updatePreviewCard(lowerSide, team);
+    }
+
+    function updatePreviewCard(side, team) {
+        const previewDiv = document.getElementById(`team-${side}-preview`);
+
+        const teamOverall = team.overall || Math.round(team.players.slice(0, 5).reduce((acc, p) => acc + (p.rating || 50), 0) / 5);
+
+        const playersHtml = team.players.map(player => `
+            <div class="flex items-center justify-between py-2 border-b border-gray-700/50 last:border-0 group hover:bg-white/5 px-2 rounded transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gray-800 overflow-hidden flex-shrink-0 border border-gray-600">
+                        ${player.photo ? `<img src="${player.photo}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">?</div>'}
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white flex items-center gap-2">
+                            ${player.name}
+                        </div>
+                        <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">${player.role}</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <div class="text-lg font-black ${getRatingColor(player.rating || 50)} leading-none">${player.rating || '-'}</div>
+                </div>
+            </div>
+        `).join('');
+
+        previewDiv.innerHTML = `
+            <div class="flex flex-col items-center mb-6 relative">
+                ${team.logo ? `<img src="${team.logo}" class="w-24 h-24 object-contain mb-4 drop-shadow-2xl">` : ''}
+                <h3 class="text-2xl font-black text-white mb-1 tracking-tight">${team.name}</h3>
+                
+                <div class="absolute top-0 right-0 bg-[#0f172a] border border-gray-600 rounded-lg p-2 shadow-xl flex flex-col items-center">
+                    <span class="text-[10px] text-gray-400 font-bold uppercase">OVR</span>
+                    <span class="text-xl font-black ${getRatingColor(teamOverall)}">${teamOverall}</span>
+                </div>
+            </div>
+            
+            <div class="space-y-1 bg-[#0f172a]/50 rounded-lg p-2">
+                <div class="flex justify-between px-2 mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Lineup</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">RTG</span>
+                </div>
+                ${playersHtml}
+            </div>
+        `;
+
+        previewDiv.classList.remove('opacity-0', 'translate-y-4');
+    }
+
+    function getRatingColor(rating) {
+        if (rating >= 90) return 'text-[#38bdf8] drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]';
+        if (rating >= 80) return 'text-[#4ade80]';
+        if (rating >= 70) return 'text-[#facc15]';
+        if (rating >= 60) return 'text-[#ca8a04]';
+        return 'text-[#ef4444]';
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstTeamA = document.querySelector('#team-a-options .team-option');
+        if (firstTeamA) firstTeamA.click();
+
+        const teamBOptions = document.querySelectorAll('#team-b-options .team-option');
+        if (teamBOptions.length > 1) {
+            teamBOptions[1].click();
+        } else if (teamBOptions.length > 0) {
+            teamBOptions[0].click();
+        }
+    });
+</script>
+<script>
+    let selectedMapIds = [];
+    let selectedMapNames = [];
+    let maxMaps = 1;
+
+    // 1. Listen for Format Changes
+    const formatSelect = document.querySelector('select[name="format"]');
+
+    function updateMaxMaps() {
+        const format = formatSelect.value;
+        if (format === 'BO3') maxMaps = 3;
+        else if (format === 'BO5') maxMaps = 5;
+        else maxMaps = 1;
+
+        // Update Indicator text
+        const indicator = document.getElementById('map-count-indicator');
+        if (indicator) indicator.textContent = `(Select ${maxMaps})`;
+
+        // Clear selection when format changes to prevent logic errors
+        selectedMapIds = [];
+        selectedMapNames = [];
+        updateMapUI();
+    }
+
+    if (formatSelect) formatSelect.addEventListener('change', updateMaxMaps);
+
+    // 2. Dropdown Toggling
+    function toggleMapDropdown() {
+        const dd = document.getElementById('map-dropdown');
+        const arrow = document.getElementById('map-arrow');
+        if (!dd || !arrow) return;
+        dd.classList.toggle('hidden');
+        arrow.style.transform = dd.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    // Close dropdown if clicking outside
+    document.addEventListener('click', function (e) {
+        const btn = document.querySelector('button[onclick="toggleMapDropdown()"]');
+        if (!btn) return;
+        const container = btn.parentNode;
+        if (container && !container.contains(e.target)) {
+            const dd = document.getElementById('map-dropdown');
+            if (dd && !dd.classList.contains('hidden')) {
+                dd.classList.add('hidden');
+                const arrow = document.getElementById('map-arrow');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    });
+
+    // 3. Selection Logic
+    function toggleMapSelection(id, name) {
+        const index = selectedMapIds.indexOf(id);
+        if (index > -1) {
+            // Deselect
+            selectedMapIds.splice(index, 1);
+            selectedMapNames.splice(index, 1);
+        } else {
+            // Select (if limit not reached)
+            if (selectedMapIds.length < maxMaps) {
+                selectedMapIds.push(id);
+                selectedMapNames.push(name);
+            } else {
+                // Optional: Visual shake or alert that limit is reached
+                // For now, if limit is 1 (BO1), we just replace the selection
+                if (maxMaps === 1) {
+                    selectedMapIds = [id];
+                    selectedMapNames = [name];
+                }
+            }
+        }
+        updateMapUI();
+
+        // Auto-close if BO1
+        if (maxMaps === 1 && selectedMapIds.length === 1) {
+            toggleMapDropdown();
+        }
+    }
+
+    function updateMapUI() {
+        // Update Hidden Input
+        const input = document.getElementById('selected_maps_input');
+        if (input) input.value = selectedMapIds.join(',');
+
+        // Update Button Text (Ascent - Abyss - Icebox)
+        const textSpan = document.getElementById('map-selection-text');
+        if (textSpan) {
+            if (selectedMapNames.length > 0) {
+                textSpan.textContent = selectedMapNames.join(' - ');
+                textSpan.classList.remove('text-gray-400');
+                textSpan.classList.add('text-white', 'font-bold');
+            } else {
+                textSpan.textContent = `Select ${maxMaps} Map${maxMaps > 1 ? 's' : ''}...`;
+                textSpan.classList.add('text-gray-400');
+                textSpan.classList.remove('text-white', 'font-bold');
+            }
+        }
+
+        // Update Dropdown Visuals (Checks and Highlights)
+        document.querySelectorAll('.map-option').forEach(el => {
+            // Reset
+            const check = el.querySelector('svg');
+            if (check) check.classList.add('opacity-0');
+            el.classList.remove('bg-[#ff4655]/10', 'border-l-4', 'border-[#ff4655]');
+
+            // Highlight selected
+            const id = el.id.replace('map-option-', '');
+            if (selectedMapIds.includes(id)) {
+                if (check) check.classList.remove('opacity-0');
+                el.classList.add('bg-[#ff4655]/10', 'border-l-4', 'border-[#ff4655]');
+            }
+        });
+    }
+
+    // Initialize
+    // Wait for DOM to load if needed, but script is at bottom
+    document.addEventListener('DOMContentLoaded', updateMaxMaps);
+
+    function randomizeSetup() {
+        // 1. Randomize Format
+        const formats = ['BO1', 'BO3', 'BO5'];
+        const randomFormat = formats[Math.floor(Math.random() * formats.length)];
+        const formatSelect = document.querySelector('select[name="format"]');
+
+        if (formatSelect) {
+            formatSelect.value = randomFormat;
+            // Manually trigger the update logic
+            updateMaxMaps();
+        }
+
+        // 2. Randomize Teams
+        if (typeof teamsData !== 'undefined' && teamsData.length >= 2) {
+            // Pick Team A
+            const indexA = Math.floor(Math.random() * teamsData.length);
+            const teamA = teamsData[indexA];
+            selectTeam('A', teamA.id);
+            // Pick Team B (ensure it's different)
+            let indexB;
+            do {
+                indexB = Math.floor(Math.random() * teamsData.length);
+            } while (indexB === indexA);
+            const teamB = teamsData[indexB];
+            selectTeam('B', teamB.id);
+        }
+
+        // 3. Randomize Maps
+        // Extract map data from DOM elements since we don't have a JSON object
+        const mapElements = Array.from(document.querySelectorAll('.map-option'));
+        const availableMaps = mapElements.map(el => ({
+            id: el.id.replace('map-option-', ''),
+            name: el.querySelector('span').textContent.trim()
+        }));
+
+        if (availableMaps.length > 0) {
+            // Shuffle array
+            for (let i = availableMaps.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableMaps[i], availableMaps[j]] = [availableMaps[j], availableMaps[i]];
+            }
+            // Determine how many maps we need
+            // Note: maxMaps global variable is updated by updateMaxMaps() called above
+            const needed = maxMaps || 1;
+            const selected = availableMaps.slice(0, needed);
+
+            // Force update selection arrays
+            selectedMapIds = selected.map(m => m.id);
+            selectedMapNames = selected.map(m => m.name);
+
+            // Refresh UI
+            updateMapUI();
+        }
+    }
+</script>
+{% endblock %}

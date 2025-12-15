@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="h-full w-full flex flex-col items-center justify-center bg-[#1a1a2e] text-white p-4 font-sans">
+
+    <div class="mb-20 text-center animate-fade-in-down">
+        <h1 class="text-7xl font-bold tracking-tighter text-[#ff4655]">
+            ValSim
+        </h1>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-8 w-full max-w-5xl justify-center items-center">
+
+        <a href="{% url 'quick_match_setup' %}"
+            class="group relative bg-[#16213e] w-72 h-40 rounded-xl border border-gray-700 hover:border-[#ff4655] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer hover:shadow-[0_0_20px_rgba(255,70,85,0.3)] transform hover:-translate-y-1">
+
+            <div class="mb-3 text-[#ff4655] group-hover:scale-110 transition-transform duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </div>
+
+            <span
+                class="text-lg font-bold text-white group-hover:text-[#ff4655] transition-colors uppercase tracking-wider">
+                Quick Match
+            </span>
+        </a>
+
+        <div
+            class="group relative bg-[#16213e] w-72 h-40 rounded-xl border border-gray-700 flex flex-col items-center justify-center opacity-50 cursor-not-allowed">
+
+            <div
+                class="absolute top-2 right-2 bg-[#ff4655] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                Coming Soon
+            </div>
+
+            <div class="mb-3 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 21h8" />
+                    <path d="M12 17v4" />
+                    <path d="M7 4h10" />
+                    <path d="M17 4v8a5 5 0 0 1-10 0V4" />
+                    <path d="M3 4h4" />
+                    <path d="M17 4h4" />
+                    <path d="M21 4v5a6 6 0 0 1-6 6" />
+                    <path d="M3 4v5a6 6 0 0 0 6 6" />
+                </svg>
+            </div>
+
+            <span class="text-lg font-bold text-gray-400 uppercase tracking-wider">
+                Career Mode
+            </span>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

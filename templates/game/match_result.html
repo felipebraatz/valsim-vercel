@@ -1,0 +1,402 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ValSim</title>
+    <!-- Tailwind CSS (CDN for standalone usage) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for match setup */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        .is-dead {
+            opacity: 0.5;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+
+        /* Cursor for sorting headers */
+        th.cursor-pointer:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body class="font-body antialiased bg-[#1a1a2e] text-[#fafafa]">
+
+    <div class="relative flex flex-col h-screen p-4 gap-4 overflow-hidden">
+        <!-- Background -->
+        {% with map_path='img/maps/'|add:match_data.map.name|lower|add:'.png' %}
+        <div class="absolute inset-0 bg-cover bg-center"
+            style="background-image: url('{% static map_path %}'); opacity: 0.15; z-index: 0;">
+        </div>
+        {% endwith %}
+        <div class="absolute inset-0 bg-[#1a1a2e]/90 z-0"></div>
+
+        <!-- Header / Scoreboard -->
+        <div class="relative z-10 flex flex-col h-full gap-4">
+            <header class="flex flex-col gap-2 items-center w-full max-w-6xl mx-auto">
+                <div
+                    class="w-full bg-[#16213e]/80 backdrop-blur-sm rounded-lg p-4 border border-white/5 text-center space-y-2 shadow-xl">
+                    <div class="flex justify-center items-center text-3xl font-bold gap-6">
+                        <!-- Team A -->
+                        <div class="flex-1 flex items-center justify-end gap-4">
+                            <div class="flex flex-col items-end">
+                                <span class="text-2xl text-white tracking-wide">{{ match_data.team_a.name }}</span>
+                            </div>
+                            {% if match_data.team_a.logo %}
+                            <img alt="{{ match_data.team_a.name }}" src="{{ match_data.team_a.logo }}" width="48"
+                                height="48" class="object-contain drop-shadow-lg">
+                            {% else %}
+                            <div class="w-12 h-12 bg-gray-700 rounded flex items-center justify-center text-lg">{{
+                                match_data.team_a.name|slice:":1" }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Score -->
+                        <div class="flex flex-col items-center">
+                            <div id="series-score"
+                                class="hidden text-sm uppercase tracking-widest text-gray-400 font-bold mb-1">Series:
+                                <span id="series-wins-a" class="text-white">0</span> - <span id="series-wins-b"
+                                    class="text-white">0</span>
+                            </div>
+                            <div
+                                class="text-6xl font-black tracking-tighter px-6 font-[Inter] flex items-center gap-4 bg-[#0f172a]/50 rounded-lg py-2 border border-white/5">
+                                <span class="text-white" id="score-a">0</span>
+                                <span class="text-gray-600 text-4xl">-</span>
+                                <span class="text-white" id="score-b">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Team B -->
+                        <div class="flex-1 flex items-center justify-start gap-4">
+                            {% if match_data.team_b.logo %}
+                            <img alt="{{ match_data.team_b.name }}" src="{{ match_data.team_b.logo }}" width="48"
+                                height="48" class="object-contain drop-shadow-lg">
+                            {% else %}
+                            <div class="w-12 h-12 bg-gray-700 rounded flex items-center justify-center text-lg">{{
+                                match_data.team_b.name|slice:":1" }}</div>
+                            {% endif %}
+                            <div class="flex flex-col items-start">
+                                <span class="text-2xl text-white tracking-wide">{{ match_data.team_b.name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inline-block bg-[#0f172a] px-3 py-1 rounded border border-gray-700">
+                        <p class="text-gray-400 uppercase tracking-[0.2em] text-[10px] font-bold">Round <span
+                                id="round-counter" class="text-white ml-1">1</span></p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Grid -->
+            <!-- Main Content Grid -->
+            <main class="flex-1 grid grid-cols-[350px_1fr_350px] items-center gap-8 max-w-7xl mx-auto w-full min-h-0">
+
+                <!-- Left Column: Team A Players -->
+                <aside class="flex flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar pr-2">
+                    <div class="w-full space-y-3">
+                        {% for player in match_data.team_a.players %}
+                        <!-- Team A Card -->
+                        <div id="player-card-{{ forloop.counter0 }}-a"
+                            class="flex items-center justify-between p-3 bg-[#16213e] rounded-lg border border-gray-700 shadow-lg relative overflow-hidden group hover:border-gray-500 transition-colors">
+                            <!-- Team Color Bar -->
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#ff4655]"></div>
+
+                            <!-- Left: Avatar + Info -->
+                            <div class="flex items-center gap-3 pl-2">
+                                <div
+                                    class="relative w-12 h-12 rounded-md overflow-hidden bg-gray-800 border-2 border-[#ff4655]/20 shrink-0">
+                                    {% if player.photo %}
+                                    <img class="w-full h-full object-cover" alt="{{ player.name }}"
+                                        src="{{ player.photo }}">
+                                    {% else %}
+                                    <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
+                                        player.role|slice:":1" }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="mr-4 min-w-0">
+                                    <div
+                                        class="font-black text-white text-lg leading-none tracking-tight player-name truncate max-w-[110px]">
+                                        {{ player.name }}</div>
+                                    <div
+                                        class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5 player-role">
+                                        {{ player.role }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Right: KDA + OVR -->
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <div class="font-bold text-white kda-display tracking-tight text-lg">0/0/0</div>
+                                    <div class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">KDA</div>
+                                </div>
+                                <div
+                                    class="bg-[#0f172a] border border-gray-600 rounded p-1.5 text-center min-w-[45px] player-ovr-box shadow-inner">
+                                    <div
+                                        class="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-0.5 opacity-70">
+                                        OVR</div>
+                                    <div class="font-black text-lg text-white leading-none player-ovr-value">{{
+                                        player.overall|default:"-" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </aside>
+
+                <div class="flex flex-col justify-center items-center h-full">
+                    <div class="relative w-[380px] aspect-square flex items-center justify-center mx-auto">
+                        <div id="simulation-map-container"
+                            class="relative z-10 w-full h-full p-2 bg-[#16213e]/50 border border-white/5 rounded-xl backdrop-blur-sm shadow-2xl flex items-center justify-center overflow-hidden">
+                            {% load static %}
+                            <img id="current-map-image" alt="Map" src="{{ match_data.map.minimap|default:'' }}"
+                                class="w-full h-full object-contain opacity-90 p-2" onerror="this.style.display='none'">
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Team B Players (Mirrored) -->
+                <aside class="flex flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar pl-2">
+                    <div class="w-full space-y-3">
+                        {% for player in match_data.team_b.players %}
+                        <!-- Team B Card (Mirrored) -->
+                        <div id="player-card-{{ forloop.counter0 }}-b"
+                            class="flex items-center justify-between p-3 bg-[#16213e] rounded-lg border border-gray-700 shadow-lg relative overflow-hidden group hover:border-gray-500 transition-colors flex-row-reverse">
+                            <!-- Team Color Bar -->
+                            <div class="absolute right-0 top-0 bottom-0 w-1 bg-[#38bdf8]"></div>
+
+                            <!-- Right (Visually Left in code): Avatar + Info -->
+                            <div class="flex items-center gap-3 pr-2 flex-row-reverse text-right">
+                                <div
+                                    class="relative w-12 h-12 rounded-md overflow-hidden bg-gray-800 border-2 border-[#38bdf8]/20 shrink-0">
+                                    {% if player.photo %}
+                                    <img class="w-full h-full object-cover" alt="{{ player.name }}"
+                                        src="{{ player.photo }}">
+                                    {% else %}
+                                    <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
+                                        player.role|slice:":1" }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4 min-w-0">
+                                    <div
+                                        class="font-black text-white text-lg leading-none tracking-tight player-name truncate max-w-[110px]">
+                                        {{ player.name }}</div>
+                                    <div
+                                        class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5 player-role">
+                                        {{ player.role }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Left (Visually Right in code): KDA + OVR -->
+                            <div class="flex items-center gap-4 flex-row-reverse">
+                                <div class="text-left">
+                                    <div class="font-bold text-white kda-display tracking-tight text-lg">0/0/0</div>
+                                    <div class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">KDA</div>
+                                </div>
+                                <div
+                                    class="bg-[#0f172a] border border-gray-600 rounded p-1.5 text-center min-w-[45px] player-ovr-box shadow-inner">
+                                    <div
+                                        class="text-[8px] text-gray-500 font-black uppercase tracking-widest mb-0.5 opacity-70">
+                                        OVR</div>
+                                    <div class="font-black text-lg text-white leading-none player-ovr-value">{{
+                                        player.overall|default:"-" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </aside>
+
+            </main>
+
+            <!-- Footer / Controls -->
+            <footer class="flex justify-center items-center gap-4 w-full max-w-6xl mx-auto mt-auto pb-6">
+
+                <a href="{% url 'quick_match_setup' %}"
+                    class="group relative px-6 py-2 bg-[#16213e] border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded transition-all">
+                    Back
+                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </a>
+
+                <button id="next-round-btn" onclick="simulateNextRound()"
+                    class="group relative px-6 py-2 bg-[#16213e] border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Simulate Round
+                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+
+                <button id="simulate-all-btn" onclick="simulateFullMatch()"
+                    class="group relative px-6 py-2 bg-[#16213e] border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded transition-all">
+                    Auto
+                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+
+                <button onclick="location.reload()"
+                    class="group relative px-6 py-2 bg-[#16213e] border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded transition-all">
+                    Reset
+                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+            </footer>
+        </div>
+
+        <div id="match-over-modal"
+            class="fixed inset-0 z-50 bg-[#09090b]/95 backdrop-blur-md hidden flex items-center justify-center p-4 animate-fade-in-up">
+            <div
+                class="w-full max-w-6xl bg-[#16213e]/80 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-6 text-center border-b border-white/10 shrink-0">
+                    <h1 class="text-4xl font-black tracking-tight mb-2 uppercase text-white italic">MAP OVER</h1>
+                    <div id="winner-text" class="text-xl text-gray-400">
+                        <span class="font-bold text-white winner-name">WINNER_NAME</span> wins the map with a score
+                        of
+                        <span class="font-bold text-white"><span id="modal-score-a-final">13</span> - <span
+                                id="modal-score-b-final">8</span></span>.
+                    </div>
+                </div>
+
+                <div id="series-tabs" class="flex justify-center gap-4 py-4 px-6 border-b border-white/5 empty:hidden">
+                    <!-- Tabs will be injected here by JS -->
+                </div>
+
+                <div class="p-6 grid md:grid-cols-2 gap-8 overflow-y-auto custom-scrollbar">
+                    <div
+                        class="bg-[#0f172a]/60 border border-white/10 rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
+                        <div class="flex items-center gap-3 p-4 border-b border-white/10 bg-[#16213e]/50">
+                            {% if match_data.team_a.logo %}
+                            <img src="{{ match_data.team_a.logo }}" alt="Team A" class="w-8 h-8 object-contain">
+                            {% endif %}
+                            <h3 class="font-bold text-2xl tracking-tight text-white">{{ match_data.team_a.name }}</h3>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left table-fixed">
+                                <thead class="text-xs text-gray-400 uppercase bg-[#16213e]/30">
+                                    <tr>
+                                        <th class="pl-4 pr-4 py-4 font-medium text-left w-[45%] truncate">Player</th>
+                                        <th onclick="setSort('kills')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by Kills">Kills</th>
+                                        <th onclick="setSort('deaths')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by Deaths">Deaths</th>
+                                        <th onclick="setSort('kd')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by K/D">K/D</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-stats-a" class="divide-y divide-white/5">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-[#0f172a]/60 border border-white/10 rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
+                        <div class="flex items-center gap-3 p-4 border-b border-white/10 bg-[#16213e]/50">
+                            {% if match_data.team_b.logo %}
+                            <img src="{{ match_data.team_b.logo }}" alt="Team B" class="w-8 h-8 object-contain">
+                            {% endif %}
+                            <h3 class="font-bold text-2xl tracking-tight text-white">{{ match_data.team_b.name }}</h3>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left table-fixed">
+                                <thead class="text-xs text-gray-400 uppercase bg-[#16213e]/30">
+                                    <tr>
+                                        <th class="pl-4 pr-4 py-4 font-medium text-left w-[45%] truncate">Player</th>
+                                        <th onclick="setSort('kills')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by Kills">Kills</th>
+                                        <th onclick="setSort('deaths')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by Deaths">Deaths</th>
+                                        <th onclick="setSort('kd')"
+                                            class="px-2 py-4 font-medium text-center w-[18%] cursor-pointer hover:text-white transition-colors select-none"
+                                            title="Sort by K/D">K/D</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-stats-b" class="divide-y divide-white/5">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 border-t border-white/10 flex justify-center gap-4 shrink-0 bg-[#16213e]/80">
+                    <button id="btn-next-map" onclick="startNextMap()"
+                        class="hidden px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg uppercase tracking-wider min-w-[140px] transition-colors shadow-lg shadow-green-500/20">
+                        Next Map
+                    </button>
+                    <button id="btn-restart" onclick="location.reload()"
+                        class="px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider border border-white/10 hover:bg-white/5 transition-colors text-gray-300 hover:text-white min-w-[140px]">
+                        Restart
+                    </button>
+                    <a href="{% url 'quick_match_setup' %}"
+                        class="px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider border border-white/10 hover:bg-white/5 transition-colors text-gray-300 hover:text-white flex items-center justify-center min-w-[140px]">
+                        New Match
+                    </a>
+                    <a href="{% url 'home' %}"
+                        class="px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider bg-[#38bdf8] hover:bg-[#38bdf8]/90 text-[#09090b] transition-colors flex items-center justify-center min-w-[140px]">
+                        Main Menu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/game_config.js' %}"></script>
+    <script src="{% static 'js/economy.js' %}"></script> <!-- Kept as requested -->
+    <script src="{% static 'js/simulation.js' %}"></script>
+    <script>
+        const backendData = JSON.parse('{{ match_data_json|escapejs }}');
+
+        // Helper to color OVRs on load (Server side rendered ones)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize colors for static OVRs
+            const ovrEls = document.querySelectorAll('.player-ovr-value');
+            ovrEls.forEach(el => {
+                const val = parseInt(el.textContent);
+                if (!isNaN(val)) {
+                    const colorClass = getOverallColor(val);
+                    // getOverallColor is in simulation.js, need to make sure it loads. 
+                    // If simulation.js loads after DOMContentLoaded listener setup but before event fires, it's fine.
+                    // Just in case, we do safety check.
+                    if (typeof getOverallColor === 'function') {
+                        el.className = 'font-black text-lg leading-none player-ovr-value ' + colorClass;
+                    }
+                }
+            });
+
+            if (typeof initializeMatch === "function") {
+                initializeMatch(backendData);
+            }
+        });
+    </script>
+</body>
+
+</html>
